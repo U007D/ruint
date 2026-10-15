@@ -141,7 +141,8 @@ cmp_fns! {
     le, "<=" => |a, b| !lt(b, a),
 }
 
-/// `a - b`, returns `((a - b).fold(0, bit_or), overflow)`.
+/// Returns a value that is zero if and only if `a == b`, and whether `a - b`
+/// borrows.
 #[inline]
 fn sub(a: &[u64], b: &[u64]) -> (u64, bool) {
     assume!(a.len() == b.len());
@@ -179,15 +180,11 @@ fn sub_fallback(a: &[u64], b: &[u64]) -> (u64, bool) {
     let mut borrow = false;
     let mut acc = 0;
     for i in 0..a.len() {
-        let x;
-        (x, borrow) = borrowing_sub(a[i], b[i], borrow);
-        acc |= x;
+        // Leaving the differences unused lets the backend select a flags-only
+        // borrow chain (`cmp`/`sbcs` on aarch64).
+        (_, borrow) = borrowing_sub(a[i], b[i], borrow);
+        acc |= a[i] ^ b[i];
     }
-    // HACK: This only black-boxes `acc` so LLVM keeps the subtraction results
-    // alive long enough for the backend to recognize the `borrowing_sub` chain
-    // and generate better code: https://github.com/rust-lang/rust/issues/143517
-    // SAFETY: Writing to a local variable through a reference is safe.
-    unsafe { core::ptr::write_volatile(&mut acc, acc) };
     (acc, borrow)
 }
 
