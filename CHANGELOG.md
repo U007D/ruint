@@ -19,9 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Optimize `mul_mod` for operands with nonzero high limbs ([#647])
 - Optimize `mul_mod` for a `2^BITS - 1` modulus ([#647])
-- Avoid vector loads in `is_zero` for sizes up to 1024 bits
+- Avoid vector loads in `is_zero` for sizes up to 1024 bits ([#656])
 
 [#647]: https://github.com/alloy-rs/ruint/pull/647
+[#656]: https://github.com/alloy-rs/ruint/pull/656
 
 ### Fixed
 
