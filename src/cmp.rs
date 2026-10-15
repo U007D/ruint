@@ -121,12 +121,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn is_zero(&self) -> bool {
-        if cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
-            // On riscv, comparing against a materialized `Self::ZERO` becomes a
-            // `bcmp`/`memcmp` libcall; OR-accumulating the limbs avoids both
-            // the libcall and the zero temporary.
-            let mut acc = 0;
-            let mut i = 0;
+        if LIMBS <= 16 || cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
+            // OR-accumulate the limbs. Comparing against `Self::ZERO`, or a
+            // plain fold that LLVM turns into a vector reduction, loads the
+            // limbs with vector loads, which stall when the limbs were just
+            // written by scalar stores; on riscv it becomes a `bcmp` libcall.
+            // Rotating one limb, which keeps it nonzero, stops LLVM from
+            // vectorizing the fold.
+            let mut acc = self.limbs.first().map_or(0, |l| l.rotate_left(1));
+            let mut i = 1;
             while i < LIMBS {
                 acc |= self.limbs[i];
                 i += 1;
@@ -218,6 +221,15 @@ mod tests {
         assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            assert!(U::ZERO.is_zero());
+            for i in 0..BITS {
+                assert!(!(U::ONE << i).is_zero());
+            }
+        });
     }
 
     #[test]
