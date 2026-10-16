@@ -125,10 +125,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // OR-accumulate the limbs. Comparing against `Self::ZERO`, or a
             // plain fold that LLVM turns into a vector reduction, loads the
             // limbs with vector loads, which stall when the limbs were just
-            // written by scalar stores; on riscv it becomes a `bcmp` libcall.
-            // Rotating one limb, which keeps it nonzero, stops LLVM from
-            // vectorizing the fold.
-            let mut acc = self.limbs.first().map_or(0, |l| l.rotate_left(1));
+            // written by scalar stores; on riscv and armv7 it becomes a `bcmp`
+            // libcall. Rotating one limb, which keeps it nonzero, stops LLVM
+            // from vectorizing the fold. Base riscv has no rotate instruction
+            // and does not vectorize the fold, so skip the rotate there.
+            let first = self.limbs.first().copied().unwrap_or(0);
+            let mut acc = if cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
+                first
+            } else {
+                first.rotate_left(1)
+            };
             let mut i = 1;
             while i < LIMBS {
                 acc |= self.limbs[i];
