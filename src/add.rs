@@ -317,11 +317,17 @@ mod tests {
 
     #[test]
     fn test_overflowing_sub() {
-        const_for!(BITS in SIZES {
+        const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
+            let reference = |a: U, b: U| (a.wrapping_add(!b).wrapping_add(U::ONE), a < b);
             proptest!(|(a: U, b: U)| {
-                assert_eq!(a.overflowing_sub(b), (a.wrapping_add(!b).wrapping_add(U::from(BITS > 0)), a < b));
+                // `c` differs from `a` only in the lowest bit, so one of the
+                // subtractions borrows through every higher limb.
+                let c = a ^ U::ONE;
+                for (x, y) in [(a, b), (a, c), (c, a)] {
+                    assert_eq!(x.overflowing_sub(y), reference(x, y));
+                }
             });
         });
     }
