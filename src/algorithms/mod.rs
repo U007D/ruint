@@ -104,7 +104,14 @@ pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
         Ordering::Equal => {}
         non_eq => return non_eq,
     }
-    let (r, o) = sub(a, b);
+    let (mut r, o) = sub(a, b);
+    if cfg!(target_arch = "x86") {
+        // HACK: Black-boxing the differences here, and not in `sub`, keeps the
+        // flags-only borrow chain for `lt` on 32-bit x86 while `cmp` keeps the
+        // shorter code that reuses the differences.
+        // SAFETY: Writing to a local variable through a reference is safe.
+        unsafe { core::ptr::write_volatile(&mut r, r) };
+    }
     if r == 0 {
         Ordering::Equal
     } else if o {
@@ -183,8 +190,9 @@ fn sub_fallback(a: &[u64], b: &[u64]) -> (u64, bool) {
         let x;
         (x, borrow) = borrowing_sub(a[i], b[i], borrow);
         // Leaving the differences unused lets the backend select a flags-only
-        // borrow chain (`cmp`/`sbcs` on aarch64). s390x does better with them.
-        acc |= if cfg!(target_arch = "s390x") {
+        // borrow chain (`cmp`/`sbcs` on aarch64). s390x and 32-bit x86 do
+        // better with them.
+        acc |= if cfg!(any(target_arch = "s390x", target_arch = "x86")) {
             x
         } else {
             a[i] ^ b[i]
