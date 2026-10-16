@@ -19,9 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Optimize `mul_mod` for operands with nonzero high limbs ([#647])
 - Optimize `mul_mod` for a `2^BITS - 1` modulus ([#647])
-- Subtract limbs in `u128` pairs on aarch64 and powerpc64
+- Subtract limbs in `u128` pairs on aarch64 and powerpc64 ([#660])
 
 [#647]: https://github.com/alloy-rs/ruint/pull/647
+[#660]: https://github.com/alloy-rs/ruint/pull/660
 
 ### Fixed
 
