@@ -127,10 +127,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // limbs with vector loads, which stall when the limbs were just
             // written by scalar stores; on riscv and armv7 it becomes a `bcmp`
             // libcall. Rotating one limb, which keeps it nonzero, stops LLVM
-            // from vectorizing the fold. Base riscv has no rotate instruction
-            // and does not vectorize the fold, so skip the rotate there.
+            // from vectorizing the fold. riscv and wasm do not vectorize the
+            // fold, and the rotate slows them down, so skip it there.
             let first = self.limbs.first().copied().unwrap_or(0);
-            let mut acc = if cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
+            let mut acc = if cfg!(any(
+                target_arch = "riscv32",
+                target_arch = "riscv64",
+                target_family = "wasm"
+            )) {
                 first
             } else {
                 first.rotate_left(1)
