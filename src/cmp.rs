@@ -121,23 +121,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn is_zero(&self) -> bool {
-        if LIMBS <= 16 || cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
+        if (LIMBS <= 16 && !cfg!(target_arch = "s390x"))
+            || cfg!(any(target_arch = "riscv32", target_arch = "riscv64"))
+        {
             // OR-accumulate the limbs. Comparing against `Self::ZERO`, or a
             // plain fold that LLVM turns into a vector reduction, loads the
             // limbs with vector loads, which stall when the limbs were just
             // written by scalar stores; on riscv and armv7 it becomes a `bcmp`
-            // libcall. Rotating one limb, which keeps it nonzero, stops LLVM
-            // from vectorizing the fold. riscv and wasm do not vectorize the
-            // fold, and the rotate slows them down, so skip it there.
+            // libcall. On x86 and aarch64, rotating one limb, which keeps it
+            // nonzero, stops LLVM from vectorizing the fold. s390x keeps the
+            // comparison, which becomes a single memory compare.
             let first = self.limbs.first().copied().unwrap_or(0);
             let mut acc = if cfg!(any(
-                target_arch = "riscv32",
-                target_arch = "riscv64",
-                target_family = "wasm"
+                target_arch = "x86",
+                target_arch = "x86_64",
+                target_arch = "aarch64"
             )) {
-                first
-            } else {
                 first.rotate_left(1)
+            } else {
+                first
             };
             let mut i = 1;
             while i < LIMBS {
