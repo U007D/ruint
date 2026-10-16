@@ -180,10 +180,23 @@ fn sub_fallback(a: &[u64], b: &[u64]) -> (u64, bool) {
     let mut borrow = false;
     let mut acc = 0;
     for i in 0..a.len() {
+        let x;
+        (x, borrow) = borrowing_sub(a[i], b[i], borrow);
         // Leaving the differences unused lets the backend select a flags-only
-        // borrow chain (`cmp`/`sbcs` on aarch64).
-        (_, borrow) = borrowing_sub(a[i], b[i], borrow);
-        acc |= a[i] ^ b[i];
+        // borrow chain (`cmp`/`sbcs` on aarch64). s390x does better with them.
+        acc |= if cfg!(target_arch = "s390x") {
+            x
+        } else {
+            a[i] ^ b[i]
+        };
+    }
+    if cfg!(target_arch = "s390x") {
+        // HACK: This only black-boxes `acc` so LLVM keeps the subtraction
+        // results alive long enough for the backend to recognize the
+        // `borrowing_sub` chain and generate better code:
+        // https://github.com/rust-lang/rust/issues/143517
+        // SAFETY: Writing to a local variable through a reference is safe.
+        unsafe { core::ptr::write_volatile(&mut acc, acc) };
     }
     (acc, borrow)
 }
