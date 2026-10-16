@@ -127,7 +127,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub const fn overflowing_neg(self) -> (Self, bool) {
-        Self::ZERO.overflowing_sub(self)
+        // `0 - x` compiles to a subtract-with-borrow chain on x86 and s390x.
+        // Elsewhere, `!x + 1` compiles to a shorter add-with-carry chain.
+        if BITS == 0
+            || cfg!(any(
+                target_arch = "x86",
+                target_arch = "x86_64",
+                target_arch = "s390x"
+            ))
+        {
+            return Self::ZERO.overflowing_sub(self);
+        }
+        let (r, carry) = self.not().overflowing_add(Self::ONE);
+        (r, !carry)
     }
 
     /// Calculates $\mod{\mathtt{self} - \mathtt{rhs}}_{2^{BITS}}$.
@@ -293,6 +305,18 @@ mod tests {
                 assert_eq!(a + (-a), U::ZERO);
                 assert_eq!(a - a, U::ZERO);
                 assert_eq!(-(-a), a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_overflowing_neg() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            assert_eq!(U::ZERO.overflowing_neg(), (U::ZERO, false));
+            proptest!(|(a: U)| {
+                assert_eq!(a.overflowing_neg(), U::ZERO.overflowing_sub(a));
             });
         });
     }
