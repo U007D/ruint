@@ -111,9 +111,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return (Self::ZERO, false);
         }
         let mut carry = false;
-        const_range_for!(i in 0..LIMBS => {
-            (self.limbs[i], carry) = carrying_add(self.limbs[i], rhs.limbs[i], carry);
-        });
+        if cfg!(all(target_arch = "x86_64", target_feature = "avx512f")) {
+            // With AVX-512, LLVM vectorizes the per-limb carries of a full
+            // chain. Adding the carry to the top limb first keeps it scalar.
+            const_range_for!(i in 0..LIMBS - 1 => {
+                (self.limbs[i], carry) = carrying_add(self.limbs[i], rhs.limbs[i], carry);
+            });
+            let (top, c1) = self.limbs[LIMBS - 1].overflowing_add(carry as u64);
+            let (top, c2) = top.overflowing_add(rhs.limbs[LIMBS - 1]);
+            self.limbs[LIMBS - 1] = top;
+            carry = c1 | c2;
+        } else {
+            const_range_for!(i in 0..LIMBS => {
+                (self.limbs[i], carry) = carrying_add(self.limbs[i], rhs.limbs[i], carry);
+            });
+        }
         let overflow = carry | (self.limbs[LIMBS - 1] > Self::MASK);
         (self.masked(), overflow)
     }
@@ -293,6 +305,20 @@ mod tests {
                 assert_eq!(a + (-a), U::ZERO);
                 assert_eq!(a - a, U::ZERO);
                 assert_eq!(-(-a), a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_overflowing_add() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U)| {
+                // `!a` and `!a + 1` carry through every limb or stop just short.
+                for b in [b, !a, (!a).wrapping_add(U::ONE)] {
+                    assert_eq!(a.overflowing_add(b), (a.wrapping_add(b), b > !a));
+                }
             });
         });
     }
