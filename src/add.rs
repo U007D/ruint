@@ -142,9 +142,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return (Self::ZERO, false);
         }
         let mut borrow = false;
-        const_range_for!(i in 0..LIMBS => {
-            (self.limbs[i], borrow) = borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
-        });
+        if cfg!(any(target_arch = "aarch64", target_arch = "powerpc64")) {
+            // These backends only form a subtract-with-borrow chain within a
+            // `u128` subtraction, so subtract limbs in pairs.
+            let mut i = 0;
+            while i + 1 < LIMBS {
+                let a = ((self.limbs[i + 1] as u128) << 64) | self.limbs[i] as u128;
+                let b = ((rhs.limbs[i + 1] as u128) << 64) | rhs.limbs[i] as u128;
+                let (d, borrow_1) = a.overflowing_sub(b);
+                let (d, borrow_2) = d.overflowing_sub(borrow as u128);
+                (self.limbs[i], self.limbs[i + 1]) = (d as u64, (d >> 64) as u64);
+                borrow = borrow_1 | borrow_2;
+                i += 2;
+            }
+            if i < LIMBS {
+                (self.limbs[i], borrow) = borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
+            }
+        } else {
+            const_range_for!(i in 0..LIMBS => {
+                (self.limbs[i], borrow) = borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
+            });
+        }
         let overflow = borrow | (self.limbs[LIMBS - 1] > Self::MASK);
         (self.masked(), overflow)
     }
@@ -293,6 +311,17 @@ mod tests {
                 assert_eq!(a + (-a), U::ZERO);
                 assert_eq!(a - a, U::ZERO);
                 assert_eq!(-(-a), a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_overflowing_sub() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U)| {
+                assert_eq!(a.overflowing_sub(b), (a.wrapping_add(!b).wrapping_add(U::from(BITS > 0)), a < b));
             });
         });
     }
