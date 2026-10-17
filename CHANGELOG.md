@@ -37,10 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove redundant homepage metadata to avoid Cargo manifest warnings ([#662])
 - `num-traits`: `ToPrimitive::to_f32`/`to_f64` and `FromPrimitive::from_f32`/`from_f64` no longer return `None` for values outside the `u64` range ([#642])
 - `f32::from(&Uint)` rounds once to 24 bits instead of through `f64`, so it is correctly rounded ([#652])
-- `serde`: reject hex strings with more digits than the type's byte width, including extra leading zeros
+- `serde`: reject hex strings with more digits than the type's byte width, including extra leading zeros ([#667])
 
 [#642]: https://github.com/alloy-rs/ruint/pull/642
 [#652]: https://github.com/alloy-rs/ruint/pull/652
+[#667]: https://github.com/alloy-rs/ruint/pull/667
 
 [#662]: https://github.com/alloy-rs/ruint/pull/662
 
