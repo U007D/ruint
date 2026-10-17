@@ -65,8 +65,8 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
 
 /// Deserialize human readable hex strings or byte arrays into [`Uint`].
 ///
-/// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
-/// can be any length. They are interpreted big-endian.
+/// Hex strings can be upper/lower/mixed case, have a `0x` prefix, and can have
+/// at most two digits per byte of the type. They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         if deserializer.is_human_readable() {
@@ -123,6 +123,18 @@ impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for HrVisitor<BITS, LIMB
         // have not shortcut, we are in an error case
         if BITS == 0 {
             return Err(Error::invalid_value(Unexpected::Str(value), &self));
+        }
+
+        // Reject hex strings with more digits than the type's byte width,
+        // even if the extra leading digits are zeros.
+        if let Some(digits) = value
+            .strip_prefix("0x")
+            .or_else(|| value.strip_prefix("0X"))
+        {
+            let len = digits.bytes().filter(|&b| b != b'_').count();
+            if len > nbytes(BITS) * 2 {
+                return Err(Error::invalid_length(len, &self));
+            }
         }
 
         value
@@ -243,6 +255,26 @@ mod tests {
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
             assert!(deserialized.is_err(), "U{BITS} {serialized} => {deserialized:?}");
+        });
+    }
+
+    #[test]
+    fn test_serde_hex_too_long() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            let de = |digits: &str| serde_json::from_str::<Uint<BITS, LIMBS>>(&format!("\"0x{digits}\""));
+            let zeros = "0".repeat(nbytes(BITS) * 2);
+            if BITS == 0 {
+                assert_eq!(de("0").unwrap(), Uint::ZERO);
+                assert!(de("00").is_err());
+                assert!(de("01").is_err());
+            } else {
+                assert_eq!(de(&zeros).unwrap(), Uint::ZERO);
+                assert_eq!(de(&format!("{}1", &zeros[1..])).unwrap(), Uint::from(1));
+                assert_eq!(de(&format!("_{zeros}_")).unwrap(), Uint::ZERO);
+                assert!(de(&format!("0{zeros}")).is_err(), "U{BITS}");
+                assert!(de(&format!("{zeros}1")).is_err(), "U{BITS}");
+            }
         });
     }
 }
