@@ -30,7 +30,7 @@ pub use self::{
     add::{borrowing_sub, borrowing_sub_n, carrying_add, carrying_add_n},
     div::div,
     gcd::{LehmerMatrix, gcd, gcd_extended, inv_mod},
-    mul::{add_nx1, addmul, addmul_n, addmul_nx1, mul_nx1, submul_nx1},
+    mul::{add_nx1, addmul, addmul_n, addmul_n_overflowing, addmul_nx1, mul_nx1, submul_nx1},
     mul_redc::{mul_redc, square_redc},
 };
 
@@ -104,6 +104,8 @@ pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
         Ordering::Equal => {}
         non_eq => return non_eq,
     }
+    // Testing the borrow first lets callers that only check for `Less` skip
+    // the equality fold.
     let (mut r, o) = sub(a, b);
     if cfg!(target_arch = "x86") {
         // HACK: Black-boxing the differences here, and not in `sub`, keeps the
@@ -112,10 +114,10 @@ pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
         // SAFETY: Writing to a local variable through a reference is safe.
         unsafe { core::ptr::write_volatile(&mut r, r) };
     }
-    if r == 0 {
-        Ordering::Equal
-    } else if o {
+    if o {
         Ordering::Less
+    } else if r == 0 {
+        Ordering::Equal
     } else {
         Ordering::Greater
     }
