@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Signed integer type `Int`, with the `Sign` enum, `I0` to `I4096` aliases and `I` literals in `uint!`
+- Signed integer type `Int`, with the `Sign` enum, `I0` to `I4096` aliases and `I` literals in `uint!` ([#695])
+- `serde`, `postgres`, `sqlx`, `bytemuck` and `zeroize` support for `Int` ([#695])
+- `sqlx-postgres` feature implementing `PgHasArrayType` for `Uint` and `Int`, mapping vectors to `BYTEA[]` ([#695])
 
 ### Fixed
 
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#688]: https://github.com/alloy-rs/ruint/pull/688
 [#689]: https://github.com/alloy-rs/ruint/pull/689
 [#690]: https://github.com/alloy-rs/ruint/pull/690
+[#695]: https://github.com/alloy-rs/ruint/pull/695
 
 ## [1.21.0] - 2026-10-20
 
