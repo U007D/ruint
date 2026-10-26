@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Optimize `try_from_be_slice`, `try_from_le_slice` and so `from_be_slice` and `from_le_slice` for slices that are not exactly `BYTES` long by loading whole limbs instead of looping over bytes
 - Optimize `rlp` `Encodable` for `Uint` of more than two limbs and at most 55 bytes by writing the header and the payload with one `put_slice` ([#697])
 
 ### Fixed
