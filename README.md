@@ -49,6 +49,23 @@ type U1337 = Uint<1337, 21>;
 let answer: U1337 = Uint::from(42);
 ```
 
+## Signed integers
+
+[`Int<BITS, LIMBS>`] is the signed counterpart of [`Uint`], storing numbers in two's complement.
+It has the same conventions as [`Uint`], the methods of the primitive signed integers, and
+aliases such as [`I256`](aliases::I256).
+
+```rust
+# use ruint::{Int, uint};
+use ruint::aliases::I256;
+
+let a = I256::try_from(-42).unwrap();
+let b: I256 = "-0x2a".parse().unwrap();
+assert_eq!(a, b);
+assert_eq!(a.unsigned_abs(), uint!(42_U256));
+assert_eq!(a.cast_unsigned().cast_signed(), a);
+```
+
 ## Rust nightly
 
 If you are on nightly, you can use [`Uint<BITS>`][nightly::Uint] which will
@@ -84,7 +101,7 @@ assert_eq!(c, Uint::from(0xf039_u64));
 
 There is a convenient macro [`uint!`] to create constants for you. It allows
 for arbitrary length constants using standard Rust integer syntax. The size of
-the [`Uint`] or [`Bits`] is specified with a `U` or `B` suffix followed by the
+the [`Uint`], [`Int`] or [`Bits`] is specified with a `U`, `I` or `B` suffix followed by the
 number of bits. The standard Rust syntax of decimal, hexadecimal and even binary and octal is
 supported using their prefixes `0x`, `0b` and `0o`. Literals can have
 underscores `_` added for readability.
@@ -105,6 +122,7 @@ let a = 42_U256;
 let b = 0xf00f_1337_c0d3_U256;
 let c = a + b;
 assert_eq!(c, 263947537596669_U256);
+assert_eq!(-1_I256 * 42_I256, -42_I256);
 
 }
 ```

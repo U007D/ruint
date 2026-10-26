@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Signed integer type `Int`, with the `Sign` enum, `I0` to `I4096` aliases and `I` literals in `uint!`
+
 ### Fixed
 
 - Wrong `mul_mod` result when the product's top limbs equal the modulus's ([#681])
