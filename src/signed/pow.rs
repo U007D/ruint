@@ -123,8 +123,8 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(a: I, exp in 0u64..8)| {
                 let e = U::wrapping_from(exp);
-                assert_eq!(a.overflowing_pow(e).0, a.wrapping_pow(e));
-                assert_eq!(a.pow(e).cast_unsigned(), a.cast_unsigned().pow(e));
+                let product = (0..e.to::<u64>()).fold(U::ONE, |p, _| p * a.cast_unsigned());
+                assert_eq!(a.overflowing_pow(e).0.cast_unsigned(), product);
             });
         });
     }

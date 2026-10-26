@@ -67,6 +67,24 @@ error: Value too large for Uint<8>: 300
   |              ^^^^^^
 ```
 
+`Int` literals must fit the type, except that `-2^(BITS-1)` is accepted right after a `-`.
+Like Rust's own `-128i8.abs()`, a method call on such a literal does not compile, because the
+call binds tighter than the `-`:
+
+```rust
+# use ruint::uint;
+# uint! {
+assert_eq!(-128_I8, ruint::aliases::I8::MIN);
+# }
+```
+
+```rust,compile_fail
+# use ruint::uint;
+# uint! {
+let wrong = -128_I8.unsigned_abs();
+# }
+```
+
 ## References
 
 * Rust [integer literals syntax](https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals).

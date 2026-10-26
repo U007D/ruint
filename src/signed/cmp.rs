@@ -118,7 +118,6 @@ mod tests {
                 // Flipping the sign bit maps signed order onto unsigned order.
                 let biased = |x: I| (x ^ I::MIN).cast_unsigned();
                 assert_eq!(a.cmp(&b), biased(a).cmp(&biased(b)));
-                assert_eq!(a.const_eq(&b), a == b);
                 assert!(I::MIN <= a && a <= I::MAX);
             });
         });

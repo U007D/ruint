@@ -291,7 +291,7 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
     /// -1`.
     #[inline(always)]
     fn overflows_div(self, rhs: Self) -> bool {
-        BITS != 0 && self == Self::MIN && rhs == Self::MINUS_ONE
+        self == Self::MIN && rhs == Self::MINUS_ONE
     }
 }
 

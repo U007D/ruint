@@ -229,9 +229,9 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_S
 {
     #[inline]
     fn uint_try_from(value: Int<BITS_SRC, LIMBS_SRC>) -> Result<Self, ToUintError<Self>> {
-        let wrapped = Self::wrapping_from(value.unsigned_abs());
         if value.is_negative() {
-            Err(ToUintError::ValueNegative(BITS, wrapped.wrapping_neg()))
+            let wrapped = Self::wrapping_from(value.unsigned_abs()).wrapping_neg();
+            Err(ToUintError::ValueNegative(BITS, wrapped))
         } else {
             Self::uint_try_from(value.0)
         }

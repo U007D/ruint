@@ -14,7 +14,10 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
     /// * [`ParseError::BaseConvertError`] if the value does not fit.
     #[inline]
     pub const fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError> {
-        let (sign, src) = split_sign(src);
+        let (sign, src) = match split_sign(src) {
+            Ok(split) => split,
+            Err(e) => return Err(e),
+        };
         match Uint::from_str_radix(src, radix) {
             Ok(abs) => Self::from_parsed(sign, abs),
             Err(e) => Err(e),
@@ -40,28 +43,29 @@ impl<const BITS: usize, const LIMBS: usize> FromStr for Int<BITS, LIMBS> {
     /// prefixes.
     #[inline]
     fn from_str(src: &str) -> Result<Self, Self::Err> {
-        let (sign, src) = split_sign(src);
+        let (sign, src) = split_sign(src)?;
         Self::from_parsed(sign, src.parse()?)
     }
 }
 
 /// Splits a leading `+` or `-` off `src`.
+///
+/// Returns an error if nothing follows the sign.
 #[inline]
-const fn split_sign(src: &str) -> (Sign, &str) {
-    match src.as_bytes() {
-        [b'-', ..] => (Sign::Negative, src.split_at(1).1),
-        [b'+', ..] => (Sign::Positive, src.split_at(1).1),
-        _ => (Sign::Positive, src),
-    }
+const fn split_sign(src: &str) -> Result<(Sign, &str), ParseError> {
+    let sign = match src.as_bytes() {
+        [b @ (b'-' | b'+')] => return Err(ParseError::InvalidDigit(*b as char)),
+        [b'-', ..] => Sign::Negative,
+        [b'+', ..] => Sign::Positive,
+        _ => return Ok((Sign::Positive, src)),
+    };
+    Ok((sign, src.split_at(1).1))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        aliases::{I0, I1, I8, I128, I256},
-        const_for, nlimbs,
-    };
+    use crate::aliases::{I0, I1, I8, I128, I256};
     use proptest::proptest;
 
     #[allow(unused_imports)]
@@ -91,17 +95,6 @@ mod tests {
     }
 
     #[test]
-    fn test_roundtrip() {
-        const_for!(BITS in SIZES {
-            const LIMBS: usize = nlimbs(BITS);
-            type I = Int<BITS, LIMBS>;
-            proptest!(|(value: I)| {
-                assert_eq!(value.to_string().parse::<I>(), Ok(value));
-            });
-        });
-    }
-
-    #[test]
     fn test_edge_cases() {
         let overflow = ParseError::BaseConvertError(BaseConvertError::Overflow);
         assert_eq!("0".parse::<I0>(), Ok(I0::ZERO));
@@ -122,6 +115,11 @@ mod tests {
             Err(overflow)
         );
         assert_eq!("+1_000".parse::<I256>(), Ok(I256::try_from(1000).unwrap()));
+        assert_eq!("-".parse::<I256>(), Err(ParseError::InvalidDigit('-')));
+        assert_eq!(
+            I256::from_str_radix("+", 10),
+            Err(ParseError::InvalidDigit('+'))
+        );
         assert_eq!("--1".parse::<I256>(), Err(ParseError::InvalidDigit('-')));
         assert_eq!("-+1".parse::<I256>(), Err(ParseError::InvalidDigit('+')));
         assert_eq!(

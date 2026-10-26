@@ -128,6 +128,13 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
         if bytes.len() > Self::BYTES {
             return None;
         }
+        if BITS.is_multiple_of(8) && bytes.len() == Self::BYTES {
+            // Every full-width byte string is a valid value.
+            return match Uint::try_from_le_slice(bytes) {
+                Some(value) => Some(Self(value)),
+                None => None,
+            };
+        }
         let [.., top] = *bytes else {
             return Some(Self::ZERO);
         };
@@ -189,6 +196,13 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
     pub const fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
         if bytes.len() > Self::BYTES {
             return None;
+        }
+        if BITS.is_multiple_of(8) && bytes.len() == Self::BYTES {
+            // Every full-width byte string is a valid value.
+            return match Uint::try_from_be_slice(bytes) {
+                Some(value) => Some(Self(value)),
+                None => None,
+            };
         }
         let [top, ..] = *bytes else {
             return Some(Self::ZERO);

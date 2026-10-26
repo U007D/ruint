@@ -1,4 +1,4 @@
-use crate::{Int, Sign};
+use crate::{Int, Sign, Uint};
 use core::{
     iter::Product,
     ops::{Mul, MulAssign},
@@ -76,7 +76,7 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Int<BITS, LIMBS> {
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::ONE, Self::wrapping_mul)
+        iter.fold(Self(Uint::ONE), Self::wrapping_mul)
     }
 }
 
@@ -86,7 +86,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Int<BITS, 
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.copied().fold(Self::ONE, Self::wrapping_mul)
+        iter.copied().fold(Self(Uint::ONE), Self::wrapping_mul)
     }
 }
 
@@ -96,7 +96,7 @@ impl_bin_op!(Int, Mul, mul, MulAssign, mul_assign, wrapping_mul);
 mod tests {
     use super::*;
     use crate::{
-        aliases::{I8, I128, I256},
+        aliases::{I1, I8, I128, I256},
         const_for, nlimbs,
     };
     use proptest::proptest;
@@ -156,5 +156,6 @@ mod tests {
             [I256::MINUS_ONE, I256::MAX].iter().product::<I256>(),
             -I256::MAX
         );
+        assert_eq!([I1::MINUS_ONE].into_iter().product::<I1>(), I1::MINUS_ONE);
     }
 }

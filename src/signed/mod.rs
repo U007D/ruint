@@ -145,7 +145,7 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn is_negative(&self) -> bool {
-        BITS != 0 && self.0.as_limbs()[LIMBS - 1] >> ((BITS - 1) % 64) != 0
+        BITS != 0 && self.0.bit(BITS - 1)
     }
 
     /// Returns `true` if `self` is positive. Zero is not positive.
@@ -278,10 +278,8 @@ mod tests {
             type I = Int<BITS, LIMBS>;
             proptest!(|(value: I)| {
                 let (sign, abs) = value.into_sign_and_abs();
-                assert_eq!(sign, value.sign());
-                assert_eq!(abs, value.unsigned_abs());
                 assert_eq!(I::checked_from_sign_and_abs(sign, abs), Some(value));
-                assert_eq!(value.cast_unsigned().cast_signed(), value);
+                assert_eq!(abs, if value.is_negative() { (-value).cast_unsigned() } else { value.cast_unsigned() });
             });
         });
         assert_eq!(

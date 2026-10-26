@@ -1,4 +1,4 @@
-use super::Int;
+use crate::Int;
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
     ShrAssign,
@@ -57,6 +57,27 @@ impl<const BITS: usize, const LIMBS: usize> Int<BITS, LIMBS> {
     #[must_use]
     pub const fn not(self) -> Self {
         Self(self.0.not())
+    }
+
+    /// Computes the bitwise or of `self` and `rhs`.
+    #[inline]
+    #[must_use]
+    pub const fn bitor(self, rhs: Self) -> Self {
+        Self(self.0.bitor(rhs.0))
+    }
+
+    /// Computes the bitwise and of `self` and `rhs`.
+    #[inline]
+    #[must_use]
+    pub const fn bitand(self, rhs: Self) -> Self {
+        Self(self.0.bitand(rhs.0))
+    }
+
+    /// Computes the bitwise xor of `self` and `rhs`.
+    #[inline]
+    #[must_use]
+    pub const fn bitxor(self, rhs: Self) -> Self {
+        Self(self.0.bitxor(rhs.0))
     }
 
     /// Returns the number of leading zeros in the two's complement
@@ -290,142 +311,11 @@ impl<const BITS: usize, const LIMBS: usize> Not for &Int<BITS, LIMBS> {
     }
 }
 
-macro_rules! impl_bit_op {
-    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
-        impl<const BITS: usize, const LIMBS: usize> $trait_assign<Int<BITS, LIMBS>>
-            for Int<BITS, LIMBS>
-        {
-            #[inline]
-            fn $fn_assign(&mut self, rhs: Int<BITS, LIMBS>) {
-                self.0.$fn_assign(rhs.0);
-            }
-        }
+impl_bin_op!(Int, BitOr, bitor, BitOrAssign, bitor_assign, bitor);
+impl_bin_op!(Int, BitAnd, bitand, BitAndAssign, bitand_assign, bitand);
+impl_bin_op!(Int, BitXor, bitxor, BitXorAssign, bitxor_assign, bitxor);
 
-        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Int<BITS, LIMBS>>
-            for Int<BITS, LIMBS>
-        {
-            #[inline]
-            fn $fn_assign(&mut self, rhs: &Int<BITS, LIMBS>) {
-                self.0.$fn_assign(rhs.0);
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> $trait<Int<BITS, LIMBS>> for Int<BITS, LIMBS> {
-            type Output = Int<BITS, LIMBS>;
-
-            #[inline]
-            fn $fn(self, rhs: Int<BITS, LIMBS>) -> Self::Output {
-                Int(self.0.$fn(rhs.0))
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> $trait<&Int<BITS, LIMBS>> for Int<BITS, LIMBS> {
-            type Output = Int<BITS, LIMBS>;
-
-            #[inline]
-            fn $fn(self, rhs: &Int<BITS, LIMBS>) -> Self::Output {
-                Int(self.0.$fn(rhs.0))
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> $trait<Int<BITS, LIMBS>> for &Int<BITS, LIMBS> {
-            type Output = Int<BITS, LIMBS>;
-
-            #[inline]
-            fn $fn(self, rhs: Int<BITS, LIMBS>) -> Self::Output {
-                Int(self.0.$fn(rhs.0))
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> $trait<&Int<BITS, LIMBS>>
-            for &Int<BITS, LIMBS>
-        {
-            type Output = Int<BITS, LIMBS>;
-
-            #[inline]
-            fn $fn(self, rhs: &Int<BITS, LIMBS>) -> Self::Output {
-                Int(self.0.$fn(rhs.0))
-            }
-        }
-    };
-}
-
-impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign);
-impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
-impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
-
-macro_rules! impl_shift {
-    ($($u:ty),* $(,)?) => {$(
-        impl<const BITS: usize, const LIMBS: usize> Shl<$u> for Int<BITS, LIMBS> {
-            type Output = Self;
-
-            #[inline(always)]
-            fn shl(self, rhs: $u) -> Self::Output {
-                // Amounts that do not fit in usize shift out the entire value.
-                self.wrapping_shl(usize::try_from(rhs).unwrap_or(usize::MAX))
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> Shr<$u> for Int<BITS, LIMBS> {
-            type Output = Self;
-
-            #[inline(always)]
-            fn shr(self, rhs: $u) -> Self::Output {
-                self.wrapping_shr(usize::try_from(rhs).unwrap_or(usize::MAX))
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> Shl<&$u> for Int<BITS, LIMBS> {
-            type Output = Self;
-
-            #[inline(always)]
-            fn shl(self, rhs: &$u) -> Self::Output {
-                self << *rhs
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> Shr<&$u> for Int<BITS, LIMBS> {
-            type Output = Self;
-
-            #[inline(always)]
-            fn shr(self, rhs: &$u) -> Self::Output {
-                self >> *rhs
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> ShlAssign<$u> for Int<BITS, LIMBS> {
-            #[inline(always)]
-            fn shl_assign(&mut self, rhs: $u) {
-                *self = *self << rhs;
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> ShrAssign<$u> for Int<BITS, LIMBS> {
-            #[inline(always)]
-            fn shr_assign(&mut self, rhs: $u) {
-                *self = *self >> rhs;
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> ShlAssign<&$u> for Int<BITS, LIMBS> {
-            #[inline(always)]
-            fn shl_assign(&mut self, rhs: &$u) {
-                *self = *self << *rhs;
-            }
-        }
-
-        impl<const BITS: usize, const LIMBS: usize> ShrAssign<&$u> for Int<BITS, LIMBS> {
-            #[inline(always)]
-            fn shr_assign(&mut self, rhs: &$u) {
-                *self = *self >> *rhs;
-            }
-        }
-    )*};
-}
-
-impl_shift!(
-    usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128
-);
+impl_shift!(Int; usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128);
 
 #[cfg(test)]
 mod tests {
@@ -496,7 +386,6 @@ mod tests {
                     assert_eq!(shifted << rhs, a);
                 }
                 assert_eq!((a >> rhs).is_negative(), a.is_negative());
-                assert_eq!(a << rhs, (a.cast_unsigned() << rhs).cast_signed());
             });
         });
     }

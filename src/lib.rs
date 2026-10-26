@@ -105,7 +105,8 @@ pub mod nightly {
 
     /// Alias for `Int` specified only by bit size.
     ///
-    /// See [`Uint`] for more information.
+    /// See [`Uint`] for more information about the alias, and [`crate::Int`]
+    /// for the type.
     pub type Int<const BITS: usize> = crate::Int<BITS, { crate::nlimbs(BITS) }>;
 }
 

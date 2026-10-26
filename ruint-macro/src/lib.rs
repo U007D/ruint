@@ -278,16 +278,19 @@ impl Transformer {
 
     /// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
     fn transform_stream(&self, stream: TokenStream) -> TokenStream {
+        let is_punct = |tree: Option<&TokenTree>, c| matches!(tree, Some(TokenTree::Punct(p)) if p.as_char() == c);
+        let mut iter = stream.into_iter().peekable();
         let mut negated = false;
-        stream
-            .into_iter()
-            .map(|tree| {
-                let next_negated = matches!(&tree, TokenTree::Punct(p) if p.as_char() == '-');
-                let tree = self.transform_tree(tree, negated);
-                negated = next_negated;
-                tree
-            })
-            .collect()
+        let mut out = Vec::new();
+        while let Some(tree) = iter.next() {
+            let next_negated = is_punct(Some(&tree), '-');
+            // A method call binds tighter than `-`, so it does not negate the
+            // literal.
+            let negated =
+                std::mem::replace(&mut negated, next_negated) && !is_punct(iter.peek(), '.');
+            out.push(self.transform_tree(tree, negated));
+        }
+        out.into_iter().collect()
     }
 }
 
