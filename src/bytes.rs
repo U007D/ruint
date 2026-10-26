@@ -635,17 +635,14 @@ mod tests {
 
             // Byte-by-byte reference for a little-endian slice.
             let reference = |le: &[u8]| {
-                let bits = le.iter().rposition(|&byte| byte != 0).map_or(0, |i| {
-                    8 * i + 8 - le[i].leading_zeros() as usize
-                });
-                if le.len() > U::BYTES || bits > BITS {
+                if le.len() > U::BYTES {
                     return None;
                 }
                 let mut limbs = [0; LIMBS];
                 for (i, &byte) in le.iter().enumerate() {
                     limbs[i / 8] |= u64::from(byte) << (8 * (i % 8));
                 }
-                Some(U::from_limbs(limbs))
+                U::checked_from_limbs_slice(&limbs)
             };
 
             let mut seed = 0x1234_5678_9abc_def1_u64;
