@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `serde`, `postgres`, `sqlx`, `bytemuck` and `zeroize` support for `Int` ([#695])
 - `sqlx-postgres` feature implementing `PgHasArrayType` for `Uint` and `Int`, mapping vectors to `BYTEA[]` ([#695])
 
+### Changed
+
+- The postgres `ToSqlError::Overflow` and `FromSqlError::Overflow` messages no longer name `Uint` ([#695])
+
 ### Fixed
 
 - Wrong `mul_mod` result when the product's top limbs equal the modulus's ([#681])
