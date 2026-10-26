@@ -1,10 +1,13 @@
-# The `uint!` macro for `Uint` and `Bits` literals
+# The `uint!` macro for `Uint`, `Int` and `Bits` literals
 
-Within the [`uint!`] macro arguments, you can write [`Uint`] and [`Bits`] literals using the [same syntax][rust-syntax] as Rust integer literals, but using a capital `U` or `B` suffix respectively. Note that there is ambiguity for hexadecimals with a `B` suffix, to lessen the impact an underscore is required in this case.
+Within the [`uint!`] macro arguments, you can write [`Uint`], [`Int`] and [`Bits`] literals using the [same syntax][rust-syntax] as Rust integer literals, but using a capital `U`, `I` or `B` suffix respectively. Note that there is ambiguity for hexadecimals with a `B` suffix, to lessen the impact an underscore is required in this case.
+
+Like Rust integer literals, `Int` literals have no sign: `-1_I256` negates `1_I256`, so it is not a constant expression.
 
 <!-- Fix linking to `Uint`. See https://github.com/rust-lang/rust/issues/74481 -->
 
 [`Uint`]: ../uint/struct.Uint.html
+[`Int`]: ../uint/struct.Int.html
 [`Bits`]: ../uint/struct.Bits.html
 [rust-syntax]: https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals
 
@@ -21,6 +24,7 @@ Now constants can be created in decimal, hex, binary and even octal:
 let avogadro = uint!(602_214_076_000_000_000_000_000_U256);
 let cow_key = uint!(0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82_U256);
 let bender = uint!(0b1010011010_U10);
+let debt = uint!(-1_000_000_I256);
 ```
 
 The [`uint!`] macro recurses through the parse tree, so the above can equivalently be written

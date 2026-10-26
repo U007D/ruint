@@ -9,66 +9,60 @@ macro_rules! uint {
 }
 
 macro_rules! impl_bin_op {
-    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fdel:ident) => {
-        impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
-            for Uint<BITS, LIMBS>
+    ($ty:ident, $trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fdel:ident) => {
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<$ty<BITS, LIMBS>>
+            for $ty<BITS, LIMBS>
         {
             #[inline(always)]
             #[track_caller]
-            fn $fn_assign(&mut self, rhs: Uint<BITS, LIMBS>) {
+            fn $fn_assign(&mut self, rhs: $ty<BITS, LIMBS>) {
                 *self = self.$fdel(rhs);
             }
         }
-        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
-            for Uint<BITS, LIMBS>
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&$ty<BITS, LIMBS>>
+            for $ty<BITS, LIMBS>
         {
             #[inline(always)]
             #[track_caller]
-            fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
+            fn $fn_assign(&mut self, rhs: &$ty<BITS, LIMBS>) {
                 *self = self.$fdel(*rhs);
             }
         }
-        impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
-            for Uint<BITS, LIMBS>
-        {
-            type Output = Uint<BITS, LIMBS>;
+        impl<const BITS: usize, const LIMBS: usize> $trait<$ty<BITS, LIMBS>> for $ty<BITS, LIMBS> {
+            type Output = $ty<BITS, LIMBS>;
 
             #[inline(always)]
             #[track_caller]
-            fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+            fn $fn(self, rhs: $ty<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(rhs)
             }
         }
-        impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
-            for Uint<BITS, LIMBS>
-        {
-            type Output = Uint<BITS, LIMBS>;
+        impl<const BITS: usize, const LIMBS: usize> $trait<&$ty<BITS, LIMBS>> for $ty<BITS, LIMBS> {
+            type Output = $ty<BITS, LIMBS>;
 
             #[inline(always)]
             #[track_caller]
-            fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+            fn $fn(self, rhs: &$ty<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(*rhs)
             }
         }
-        impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
-            for &Uint<BITS, LIMBS>
-        {
-            type Output = Uint<BITS, LIMBS>;
+        impl<const BITS: usize, const LIMBS: usize> $trait<$ty<BITS, LIMBS>> for &$ty<BITS, LIMBS> {
+            type Output = $ty<BITS, LIMBS>;
 
             #[inline(always)]
             #[track_caller]
-            fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+            fn $fn(self, rhs: $ty<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(rhs)
             }
         }
-        impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
-            for &Uint<BITS, LIMBS>
+        impl<const BITS: usize, const LIMBS: usize> $trait<&$ty<BITS, LIMBS>>
+            for &$ty<BITS, LIMBS>
         {
-            type Output = Uint<BITS, LIMBS>;
+            type Output = $ty<BITS, LIMBS>;
 
             #[inline(always)]
             #[track_caller]
-            fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+            fn $fn(self, rhs: &$ty<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(*rhs)
             }
         }
