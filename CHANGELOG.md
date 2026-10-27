@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Carthage fork: disable unused Arkworks 0.3, 0.4 and 0.5 integrations to remove unmaintained `derivative` and `paste` dependencies
+
 ### Fixed
 
 - Wrong `mul_mod` result when the product's top limbs equal the modulus's ([#681])

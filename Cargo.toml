@@ -72,9 +72,6 @@ thiserror = { version = "2.0", optional = true }
 # support
 alloy-rlp = { version = "0.3", optional = true, default-features = false }
 arbitrary = { version = "1", optional = true, default-features = false }
-ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
-ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
-ark-ff-05 = { version = "0.5.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-06 = { version = "0.6.0", package = "ark-ff", optional = true, default-features = false }
 bigdecimal = { version = "0.4", optional = true, default-features = false }
 bincode-2 = { version = "2", package = "bincode", optional = true, default-features = false }
@@ -134,9 +131,6 @@ pyo3-build-config = { version = "0.25", optional = true, default-features = fals
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
 
-ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
-ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
-ark-bn254-05 = { version = "0.5.0", package = "ark-bn254" }
 ark-bn254-06 = { version = "0.6.0", package = "ark-bn254" }
 
 rand-09 = { version = "=0.9.5", package = "rand" }
@@ -164,9 +158,6 @@ borsh = { version = "=1.8.1", features = ["derive"] }
 # borsh, rand-09 and rand-010 are pinned above; proptest is also pinned in the wasm block.
 alloy-rlp = { version = "=0.3.16", default-features = false }
 arbitrary = { version = "=1.4.2", default-features = false }
-ark-ff-03 = { version = "=0.3.0", package = "ark-ff", default-features = false }
-ark-ff-04 = { version = "=0.4.2", package = "ark-ff", default-features = false }
-ark-ff-05 = { version = "=0.5.0", package = "ark-ff", default-features = false }
 ark-ff-06 = { version = "=0.6.0", package = "ark-ff", default-features = false }
 bigdecimal = { version = "=0.4.10", default-features = false }
 bincode-2 = { version = "=2.0.1", package = "bincode", default-features = false }
@@ -213,9 +204,6 @@ default = ["std"]
 std = [
     "alloc",
     "alloy-rlp?/std",
-    "ark-ff-03?/std",
-    "ark-ff-04?/std",
-    "ark-ff-05?/std",
     "ark-ff-06?/std",
     "bytes?/std",
     "fastrlp-03?/std",
@@ -254,9 +242,6 @@ generic_const_exprs = ["nightly"]
 # support
 alloy-rlp = ["dep:alloy-rlp", "alloc"]
 arbitrary = ["dep:arbitrary", "std"]
-ark-ff = ["dep:ark-ff-03"]
-ark-ff-04 = ["dep:ark-ff-04"]
-ark-ff-05 = ["dep:ark-ff-05"]
 ark-ff-06 = ["dep:ark-ff-06"]
 bigdecimal = ["dep:bigdecimal", "num-bigint"]
 bincode-2 = ["dep:bincode-2"]
